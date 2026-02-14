@@ -15,8 +15,14 @@ function getAllowedOrigins() {
 function isOriginAllowed(req: Request, allowedOrigins: Set<string>) {
   const origin = req.headers.get("origin");
   if (!origin) return true;
+
+  // Always allow same-origin requests (common when the frontend is served by this server)
+  // even if CORS_ORIGINS is configured for additional external origins.
+  const requestOrigin = new URL(req.url).origin;
+  if (origin === requestOrigin) return true;
+
   if (allowedOrigins.size > 0) return allowedOrigins.has(origin);
-  return origin === new URL(req.url).origin;
+  return false;
 }
 
 function corsHeadersForApi(req: Request) {

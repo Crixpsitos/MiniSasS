@@ -59,29 +59,46 @@ const UploadVideo = () => {
     e.preventDefault();
     if (!canSubmit) return;
     try {
-        setIsUploading(true);
-        setError(null);
+      setIsUploading(true);
+      setError(null);
 
-        const formData = new FormData();
-        files.forEach(file => formData.append("uploads", file));
+      const formData = new FormData();
+      files.forEach((file) => formData.append("uploads", file));
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-        const data = (await response.json()) as UploadApiResponse & { error?: string };
-        if (!response.ok) {
-          throw new Error(data.error || data.message || "Error subiendo el archivo");
+      const contentType = response.headers.get("content-type") ?? "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : await response.text().catch(() => "");
+
+      if (!response.ok) {
+        if (typeof payload === "string" && payload.trim().length > 0) {
+          throw new Error(payload);
         }
 
-        setUploadResult(data);
-        setIsModalOpen(true);
+        const message =
+          (payload && typeof payload === "object" && (payload as any).error) ||
+          (payload && typeof payload === "object" && (payload as any).message) ||
+          `Error subiendo el archivo (${response.status})`;
+
+        throw new Error(String(message));
+      }
+
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Respuesta inválida del servidor.");
+      }
+
+      setUploadResult(payload as UploadApiResponse);
+      setIsModalOpen(true);
     } catch (error) {
-        console.error(error);
-        setError(error instanceof Error ? error.message : String(error));
+      console.error(error);
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   };
 
