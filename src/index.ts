@@ -16,10 +16,21 @@ function isOriginAllowed(req: Request, allowedOrigins: Set<string>) {
   const origin = req.headers.get("origin");
   if (!origin) return true;
 
+  let originUrl: URL;
+  try {
+    originUrl = new URL(origin);
+  } catch {
+    return false;
+  }
+
   // Always allow same-origin requests (common when the frontend is served by this server)
   // even if CORS_ORIGINS is configured for additional external origins.
-  const requestOrigin = new URL(req.url).origin;
-  if (origin === requestOrigin) return true;
+  const requestUrl = new URL(req.url);
+  if (originUrl.origin === requestUrl.origin) return true;
+
+  // Behind reverse proxies (e.g. Render), req.url may appear as http while the browser Origin is https.
+  // In that case, treat same-host as allowed.
+  if (originUrl.host === requestUrl.host) return true;
 
   if (allowedOrigins.size > 0) return allowedOrigins.has(origin);
   return false;
