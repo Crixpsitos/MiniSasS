@@ -46,6 +46,26 @@ function corsHeadersForApi(req: Request) {
   });
 }
 
+function getPublicOrigin(req: Request) {
+  const explicit = (process.env.PUBLIC_BASE_URL ?? "").trim();
+  if (explicit) {
+    try {
+      return new URL(explicit).origin;
+    } catch {
+      // ignore invalid env var
+    }
+  }
+
+  const reqUrl = new URL(req.url);
+  const forwardedProto = (req.headers.get("x-forwarded-proto") ?? "").split(",")[0]?.trim();
+  const forwardedHost = (req.headers.get("x-forwarded-host") ?? "").split(",")[0]?.trim();
+  const host = forwardedHost || req.headers.get("host") || reqUrl.host;
+
+  // Bun may see requests as http behind a TLS-terminating proxy. Prefer forwarded proto.
+  const protocol = forwardedProto ? `${forwardedProto}:` : reqUrl.protocol;
+  return `${protocol}//${host}`;
+}
+
 function lastNDaysIsoDates(days: number) {
   const today = new Date();
   const dates: string[] = [];
@@ -183,7 +203,7 @@ const server = serve({
 
           for (const file of files) {
             const fileName = `${crypto.randomUUID()}-${file.name}`;
-            const url = new URL(`/v/${encodeURIComponent(fileName)}`, server.url).toString();
+            const url = new URL(`/v/${encodeURIComponent(fileName)}`, getPublicOrigin(req)).toString();
 
             await Bun.write(`${uploadDir}/${fileName}`, file);
 
