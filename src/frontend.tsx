@@ -9,10 +9,13 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 
 function start() {
-  const root = createRoot(document.getElementById("root")!);
-  root.render(
-    <App />
-  );
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Missing #root container");
+
+  const globalAny = globalThis as unknown as { __miniSasRoot?: ReturnType<typeof createRoot> };
+  const root = globalAny.__miniSasRoot ?? (globalAny.__miniSasRoot = createRoot(container));
+
+  root.render(<App />);
 }
 
 if (document.readyState === "loading") {

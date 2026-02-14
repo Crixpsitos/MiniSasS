@@ -10,7 +10,7 @@ const Sidebar = () => {
     const links = [
         { to: "/", label: "Dashboard" },
         { to: "/upload-videos", label: "Subir videos" },
-        { to: "/settings", label: "Settings" },
+        { to: "/see-videos", label: "Ver videos" },
     ];
     return (
         <div className="h-full w-full bg-gray-800 text-white p-4">

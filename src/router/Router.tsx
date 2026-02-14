@@ -19,8 +19,12 @@ const router = createBrowserRouter([
                     },
                     {
                         path: "upload-videos",
-                        lazy: lazyRoute(() => import("../modules/uploadVideos/pages/UploadVideo")),
+                        lazy: lazyRoute(() => import("../modules/videos/pages/UploadVideo")),
                     },
+                    {
+                        path: "see-videos",
+                        lazy: lazyRoute(() => import("../modules/videos/pages/SeeVideos")),
+                    }
                 ],
             },
 
